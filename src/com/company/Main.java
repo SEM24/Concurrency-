@@ -46,5 +46,33 @@ public class Main {
         executorService.shutdownNow();
     }
 
+    private void run2() {
+        /**
+         * Получить доступ к singleton-объекту с “ленивой” (lazy) инициализацией
+         * из множества потоков с использованием барьера инициализации при помощи класса CountDownLatch.
+         * Подтвердить проблему атомарности. Решить ее.
+         */
+
+        CountDownLatch doneSignal = new CountDownLatch(expected);
+        ExecutorService executor = Executors.newFixedThreadPool(expected);
+
+        final Runnable task = () -> {
+            Singleton.getInstance();
+            SingletonSolution.getInstance();
+            doneSignal.countDown();
+        };
+        for (int i = 0; i < expected; i++) {
+            executor.submit(task);
+        }
+
+        try {
+            doneSignal.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        executor.shutdown();
+    }
+
+
 
 }
