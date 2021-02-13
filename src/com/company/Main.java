@@ -73,6 +73,47 @@ public class Main {
         executor.shutdown();
     }
 
+    private void run3() {
+        /**
+         * Create a simple java program with 2 methods.
+         * One method prints “Hello” and the other method prints “World”.
+         * Call these methods concurrently & asynchronously. That is, both methods are invoked at the same instant, not one after the other.
+         * So on console you should sometimes see “World Hello” and sometimes “Hello World” depending on which method is invoked first.
+         * Repeat these calls every 10 seconds and stop after 1 minute.
+         * Expected Result: On the console you should see 6 combinations, a mix of “Hello World” and “World Hello”.
+         */
 
+        HelloWorld helloWorld = new HelloWorld();
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
+        Runnable run = () -> {
+            scheduler.execute(() -> {
+                try {
+                    countDownLatch.await();
+                    helloWorld.showHello();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            });
+
+            scheduler.execute(() -> {
+                try {
+                    countDownLatch.await();
+                    helloWorld.showWorld();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            });
+            countDownLatch.countDown();
+        };
+
+        ScheduledFuture<?> helloWorldResult =
+                scheduler.scheduleAtFixedRate(run, 0, 10, TimeUnit.SECONDS);
+        scheduler.schedule(() -> {
+            helloWorldResult.cancel(true);
+            scheduler.shutdown();
+        }, 60, TimeUnit.SECONDS);
+    }
 
 }
